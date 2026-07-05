@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-900: #0f172a;
+  /* Fundo principal */
+  --color-primary-800: #1e293b;
+  /* Fundo dos cards */
+  --color-gold: #dfb36b;
+  /* Dourado da logo */
+  --color-gold-hover: #b4853d;
+  --color-purple-gradient: #4c1d95;
+  /* Inicio do gradiente do botão */
+  --color-gold-gradient: #ca8a04;
+  /* Fim do gradiente do botão */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
