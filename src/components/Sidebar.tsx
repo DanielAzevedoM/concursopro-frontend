@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Book, Crown, LineChart, HelpCircle, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
