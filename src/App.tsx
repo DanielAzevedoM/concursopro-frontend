@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import type { ReactNode } from 'react';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -9,7 +10,7 @@ import Questions from './pages/Questions';
 import Premium from './pages/Premium';
 import DashboardLayout from './layouts/DashboardLayout';
 
-function PrivateRoute({ children }: { children: JSX.Element }) {
+function PrivateRoute({ children }: { children: ReactNode }) {
   const { signed, loading } = useAuth();
 
   if (loading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;

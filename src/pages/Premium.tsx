@@ -1,4 +1,3 @@
-import React from 'react';
 import { Crown, Target } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PremiumBanner from '../components/PremiumBanner';
