@@ -8,6 +8,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Questions from './pages/Questions';
 import Premium from './pages/Premium';
+import Contests from './pages/Contests';
+import ContestDetails from './pages/ContestDetails';
+import ExamSolve from './pages/ExamSolve';
 import DashboardLayout from './layouts/DashboardLayout';
 
 function PrivateRoute({ children }: { children: ReactNode }) {
@@ -15,7 +18,7 @@ function PrivateRoute({ children }: { children: ReactNode }) {
 
   if (loading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
   if (!signed) return <Navigate to="/" />;
-  
+
   return children;
 }
 
@@ -27,39 +30,69 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          
+
           {/* Rotas protegidas (Layout com Sidebar) */}
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <DashboardLayout>
                   <Dashboard />
                 </DashboardLayout>
               </PrivateRoute>
-            } 
+            }
           />
-          <Route 
-            path="/questions" 
+          <Route
+            path="/questions"
             element={
               <PrivateRoute>
                 <DashboardLayout>
                   <Questions />
                 </DashboardLayout>
               </PrivateRoute>
-            } 
+            }
           />
-          <Route 
-            path="/premium" 
+          <Route
+            path="/premium"
             element={
               <PrivateRoute>
                 <DashboardLayout>
                   <Premium />
                 </DashboardLayout>
               </PrivateRoute>
-            } 
+            }
           />
-          
+          <Route
+            path="/concursos"
+            element={
+              <PrivateRoute>
+                <DashboardLayout>
+                  <Contests />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/concursos/:id"
+            element={
+              <PrivateRoute>
+                <DashboardLayout>
+                  <ContestDetails />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/prova/:id"
+            element={
+              <PrivateRoute>
+                <DashboardLayout>
+                  <ExamSolve />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>

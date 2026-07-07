@@ -5,6 +5,7 @@ interface User {
   name: string;
   email: string;
   planType: string;
+  dailyErrors?: number;
 }
 
 interface AuthContextData {
@@ -54,7 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(meData);
       localStorage.setItem('@ConcursoApp:user', JSON.stringify(meData));
     } catch (err) {
-      const loggedUser = { name, email, planType };
+      const loggedUser = { name, email, planType, dailyErrors: 0 };
       setUser(loggedUser);
       localStorage.setItem('@ConcursoApp:user', JSON.stringify(loggedUser));
     }
@@ -70,7 +71,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(meData);
       localStorage.setItem('@ConcursoApp:user', JSON.stringify(meData));
     } catch (err) {
-      const loggedUser = { name, email, planType };
+      const loggedUser = { name, email, planType, dailyErrors: 0 };
       setUser(loggedUser);
       localStorage.setItem('@ConcursoApp:user', JSON.stringify(loggedUser));
     }

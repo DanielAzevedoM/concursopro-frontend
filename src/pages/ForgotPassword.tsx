@@ -47,8 +47,8 @@ export default function ForgotPassword() {
 
       <div className="max-w-[400px] w-full space-y-8 bg-primary-800 p-10 rounded-3xl shadow-2xl border border-gray-700/50 relative z-10">
         <div>
-          <div className="flex flex-col items-center justify-center cursor-pointer mb-2">
-            <img src={goldLogo} alt="ConcursoPro Ouro" className="w-40 h-auto object-contain mb-2" />
+          <div className="flex flex-col items-center justify-center cursor-pointer">
+            <img src={goldLogo} alt="ConcursoPro Ouro" className="w-64 h-auto object-contain -mb-4" />
           </div>
           <h2 className="mt-6 text-center text-2xl font-bold text-white">
             Recuperar Senha
