@@ -12,7 +12,7 @@ export default function Sidebar({ onItemClick }: SidebarProps = {}) {
 
   const navItems = [
     { name: 'Visão Geral', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Disciplinas', path: '/questions', icon: Book },
+    { name: 'Questões', path: '/concursos', icon: Book },
     { name: 'Premium', path: '/premium', icon: Crown },
     { name: 'Desempenho', path: '/performance', icon: LineChart, disabled: true },
     { name: 'Ajuda', path: '/help', icon: HelpCircle, disabled: true },
