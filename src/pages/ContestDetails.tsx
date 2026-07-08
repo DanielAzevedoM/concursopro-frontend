@@ -28,8 +28,8 @@ export default function ContestDetails() {
   useEffect(() => {
     async function loadDetails() {
       try {
-        const data = await ApiService.get<ContestDetailsData>(`/categories/${id}/details`);
-        setData(data);
+        const response = await ApiService.get<any>(`/categories/${id}/details`);
+        setData(response.data || response);
       } catch (error) {
         console.error("Erro ao carregar detalhes", error);
       }
@@ -50,7 +50,7 @@ export default function ContestDetails() {
         Voltar para Concursos
       </button>
 
-      <div className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-extrabold text-[#1e293b] mb-2">
             {data.category.name}
@@ -58,13 +58,13 @@ export default function ContestDetails() {
           <p className="text-gray-500">{data.category.description}</p>
         </div>
         <div className="flex gap-4">
-          <div className="bg-blue-50 px-4 py-3 rounded-lg text-center min-w-[100px]">
-            <span className="block text-2xl font-bold text-blue-600">{data.exams.length}</span>
-            <span className="text-xs text-blue-600 uppercase font-semibold">Provas</span>
+          <div className="bg-indigo-50 px-5 py-4 rounded-2xl text-center min-w-[110px] border border-indigo-100">
+            <span className="block text-3xl font-extrabold text-indigo-600">{data.exams.length}</span>
+            <span className="text-xs text-indigo-600 uppercase font-bold mt-1 block">Provas</span>
           </div>
-          <div className="bg-emerald-50 px-4 py-3 rounded-lg text-center min-w-[100px]">
-            <span className="block text-2xl font-bold text-emerald-600">{data.totalQuestions}</span>
-            <span className="text-xs text-emerald-600 uppercase font-semibold">Questões</span>
+          <div className="bg-emerald-50 px-5 py-4 rounded-2xl text-center min-w-[110px] border border-emerald-100">
+            <span className="block text-3xl font-extrabold text-emerald-600">{data.totalQuestions}</span>
+            <span className="text-xs text-emerald-600 uppercase font-bold mt-1 block">Questões</span>
           </div>
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function ContestDetails() {
           </h2>
           <div className="space-y-4">
             {data.exams.map((exam) => (
-              <div key={exam.id} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:border-blue-200 transition-colors flex items-center justify-between">
+              <div key={exam.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-indigo-200 transition-all flex items-center justify-between hover:shadow-md">
                 <div>
                   <h3 className="text-lg font-bold text-[#1e293b]">{exam.name}</h3>
                   <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
@@ -89,7 +89,7 @@ export default function ContestDetails() {
                 </div>
                 <button 
                   onClick={() => navigate(`/prova/${exam.id}`)}
-                  className="bg-[#3b82f6] hover:bg-blue-600 text-white font-medium px-6 py-2.5 rounded-lg transition-colors"
+                  className="bg-[#1e293b] hover:bg-[#334155] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm"
                 >
                   Resolver Prova
                 </button>
@@ -107,7 +107,7 @@ export default function ContestDetails() {
             <BookOpen className="w-5 h-5 text-gray-400" />
             Matérias e Assuntos
           </h2>
-          <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
             {Object.entries(data.subjects).length === 0 ? (
               <p className="text-sm text-gray-500">Nenhuma questão mapeada.</p>
             ) : (

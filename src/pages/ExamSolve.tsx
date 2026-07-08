@@ -14,6 +14,7 @@ interface Question {
   optionD?: string;
   optionE?: string;
   optionF?: string;
+  type: string;
 }
 
 interface AnswerResponse {
@@ -111,14 +112,19 @@ export default function ExamSolve() {
   if (loading) return <div className="p-8 text-center">Carregando prova...</div>;
   if (questions.length === 0) return <div className="p-8 text-center">Nenhuma questão encontrada para esta prova.</div>;
 
-  const options = [
-    { key: "A", text: currentQuestion.optionA },
-    { key: "B", text: currentQuestion.optionB },
-    { key: "C", text: currentQuestion.optionC },
-    { key: "D", text: currentQuestion.optionD },
-    { key: "E", text: currentQuestion.optionE },
-    { key: "F", text: currentQuestion.optionF },
-  ].filter(o => o.text);
+  const options = currentQuestion.type === "RIGHT_WRONG"
+    ? [
+        { key: "C", text: "Certo" },
+        { key: "E", text: "Errado" },
+      ]
+    : [
+        { key: "A", text: currentQuestion.optionA },
+        { key: "B", text: currentQuestion.optionB },
+        { key: "C", text: currentQuestion.optionC },
+        { key: "D", text: currentQuestion.optionD },
+        { key: "E", text: currentQuestion.optionE },
+        { key: "F", text: currentQuestion.optionF },
+      ].filter(o => o.text);
 
   return (
     <div className="pb-10 max-w-4xl mx-auto">
