@@ -50,20 +50,20 @@ export default function ContestDetails() {
         Voltar para Concursos
       </button>
 
-      <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#1e293b] mb-2">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#1e293b] mb-2">
             {data.category.name}
           </h1>
-          <p className="text-gray-500">{data.category.description}</p>
+          <p className="text-gray-500 text-sm md:text-base">{data.category.description}</p>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-indigo-50 px-5 py-4 rounded-2xl text-center min-w-[110px] border border-indigo-100">
-            <span className="block text-3xl font-extrabold text-indigo-600">{data.exams.length}</span>
+        <div className="flex gap-4 w-full md:w-auto">
+          <div className="bg-indigo-50 px-4 py-4 md:px-5 rounded-2xl text-center flex-1 md:min-w-[110px] border border-indigo-100">
+            <span className="block text-2xl md:text-3xl font-extrabold text-indigo-600">{data.exams.length}</span>
             <span className="text-xs text-indigo-600 uppercase font-bold mt-1 block">Provas</span>
           </div>
-          <div className="bg-emerald-50 px-5 py-4 rounded-2xl text-center min-w-[110px] border border-emerald-100">
-            <span className="block text-3xl font-extrabold text-emerald-600">{data.totalQuestions}</span>
+          <div className="bg-emerald-50 px-4 py-4 md:px-5 rounded-2xl text-center flex-1 md:min-w-[110px] border border-emerald-100">
+            <span className="block text-2xl md:text-3xl font-extrabold text-emerald-600">{data.totalQuestions}</span>
             <span className="text-xs text-emerald-600 uppercase font-bold mt-1 block">Questões</span>
           </div>
         </div>
@@ -78,18 +78,18 @@ export default function ContestDetails() {
           </h2>
           <div className="space-y-4">
             {data.exams.map((exam) => (
-              <div key={exam.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-indigo-200 transition-all flex items-center justify-between hover:shadow-md">
-                <div>
+              <div key={exam.id} className="bg-white rounded-2xl p-5 md:p-6 border border-gray-100 shadow-sm hover:border-indigo-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 hover:shadow-md">
+                <div className="w-full">
                   <h3 className="text-lg font-bold text-[#1e293b]">{exam.name}</h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                  <div className="flex flex-wrap items-center gap-3 md:gap-4 text-sm text-gray-500 mt-2">
                     <span className="flex items-center gap-1"><Clock className="w-4 h-4"/> {exam.year || "N/A"}</span>
                     <span className="flex items-center gap-1"><BookOpen className="w-4 h-4"/> Banca: {exam.institution || "N/A"}</span>
-                    <span>{exam.questionsCount} questões</span>
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-md text-xs font-semibold">{exam.questionsCount} questões</span>
                   </div>
                 </div>
                 <button 
                   onClick={() => navigate(`/prova/${exam.id}`)}
-                  className="bg-[#1e293b] hover:bg-[#334155] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm"
+                  className="w-full md:w-auto whitespace-nowrap bg-[#1e293b] hover:bg-[#334155] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm mt-2 md:mt-0"
                 >
                   Resolver Prova
                 </button>
