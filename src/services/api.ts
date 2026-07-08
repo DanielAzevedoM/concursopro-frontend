@@ -18,7 +18,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("@ConcursoApp:token");
       localStorage.removeItem("@ConcursoApp:user");
-      window.location.href = "/login";
+      
+      // Evita o redirecionamento (e o reload da página) se o erro 401 
+      // acontecer na própria tela de login (/)
+      if (window.location.pathname !== "/") {
+        window.location.href = "/";
+      }
     }
     return Promise.reject(error);
   }
