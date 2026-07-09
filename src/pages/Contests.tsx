@@ -273,10 +273,10 @@ export default function Contests() {
 
       {/* Cadastrados */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-[#1e293b]">Meus Cadastros</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1e293b] whitespace-nowrap">Meus Cadastros</h2>
           {isFree && (
-            <span className="text-sm font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full border border-indigo-200">
+            <span className="text-[11px] sm:text-sm font-bold bg-indigo-100 text-indigo-700 px-2 sm:px-3 py-1 rounded-full border border-indigo-200 whitespace-nowrap">
               {enrolledContests.length} / 2 Cadastros Gratuitos
             </span>
           )}

@@ -137,6 +137,7 @@ export default function ExamSolve() {
     setGroupAnswers({});
     if (currentIndex < questionScopes.length - 1) {
       setCurrentIndex(c => c + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setAlertModal({
         isOpen: true,

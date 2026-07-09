@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import AlertModal, { type AlertType } from './components/AlertModal';
+import ScrollToTop from './components/ScrollToTop';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -65,6 +66,7 @@ function GlobalAlert() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <GlobalAlert />
       <AuthProvider>
         <Routes>
