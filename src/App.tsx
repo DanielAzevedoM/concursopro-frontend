@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import AlertModal, { type AlertType } from './components/AlertModal';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -22,9 +24,48 @@ function PrivateRoute({ children }: { children: ReactNode }) {
   return children;
 }
 
+function GlobalAlert() {
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    type: AlertType;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: 'error',
+    title: '',
+    message: '',
+  });
+
+  useEffect(() => {
+    const handleGlobalAlert = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setAlertConfig({
+        isOpen: true,
+        type: customEvent.detail.type || 'error',
+        title: customEvent.detail.title || 'Aviso',
+        message: customEvent.detail.message,
+      });
+    };
+    window.addEventListener('global-alert', handleGlobalAlert);
+    return () => window.removeEventListener('global-alert', handleGlobalAlert);
+  }, []);
+
+  return (
+    <AlertModal
+      isOpen={alertConfig.isOpen}
+      type={alertConfig.type}
+      title={alertConfig.title}
+      message={alertConfig.message}
+      onConfirm={() => setAlertConfig((prev) => ({ ...prev, isOpen: false }))}
+    />
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <GlobalAlert />
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Login />} />
