@@ -37,7 +37,7 @@ interface AnswerResponse {
 export default function ExamSolve() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [questionScopes, setQuestionScopes] = useState<QuestionScope[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -113,6 +113,7 @@ export default function ExamSolve() {
 
       if (data.remainingLives !== -1) {
         setLocalLives(data.remainingLives);
+        updateUser({ dailyErrors: Math.max(0, 5 - data.remainingLives) });
         if (data.remainingLives <= 0) {
           setOutOfLives(true);
         }

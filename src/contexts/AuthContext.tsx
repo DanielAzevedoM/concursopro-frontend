@@ -14,6 +14,7 @@ interface AuthContextData {
   login: (data: any) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
+  updateUser: (data: Partial<User>) => void;
   loading: boolean;
 }
 
@@ -83,8 +84,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('@ConcursoApp:token');
   }
 
+  function updateUser(newData: Partial<User>) {
+    if (!user) return;
+    const updatedUser = { ...user, ...newData };
+    setUser(updatedUser);
+    localStorage.setItem('@ConcursoApp:user', JSON.stringify(updatedUser));
+  }
+
   return (
-    <AuthContext.Provider value={{ signed: !!user, user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ signed: !!user, user, login, register, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
