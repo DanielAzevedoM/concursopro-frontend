@@ -192,7 +192,11 @@ export default function ExamSolve() {
       {/* Base Text Card if exists */}
       {currentScope.text && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8 mb-6 shadow-sm">
-          <p className="text-xs text-indigo-500 font-bold mb-4 uppercase tracking-wider">Texto de Referência</p>
+          <div className="mb-4">
+            <span className="inline-block bg-slate-100 text-primary-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              Texto de Referência
+            </span>
+          </div>
           <p className="text-[#1e293b] whitespace-pre-wrap text-lg font-medium leading-relaxed">
             {currentScope.text}
           </p>
