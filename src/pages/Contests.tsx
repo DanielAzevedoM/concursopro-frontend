@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, Filter, Shield, Landmark, Scale, GraduationCap, Building, Stethoscope, CheckCircle, Trash2, Lock } from "lucide-react";
 import { ApiService } from "../services/ApiService";
 import { useAuth } from "../contexts/AuthContext";
+import AlertModal, { type AlertType } from "../components/AlertModal";
 
 interface Contest {
   id: string;
@@ -19,6 +20,22 @@ export default function Contests() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    type: AlertType;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: () => { },
+  });
 
   const loadContests = async () => {
     try {
@@ -45,25 +62,81 @@ export default function Contests() {
   };
 
   const handleEnroll = async (contestId: string) => {
-    if (!window.confirm("Deseja se cadastrar neste concurso? (Aviso: O descadastro só poderá ser feito após 15 dias)")) return;
-    try {
-      await ApiService.post(`/categories/${contestId}/enroll`);
-      alert("Cadastrado com sucesso!");
-      loadContests();
-    } catch (error) {
-      // ApiService já lida com o alert na maioria dos casos, mas garante o recarregamento se necessário
-    }
+    setAlertModal({
+      isOpen: true,
+      type: "info",
+      title: "Confirmação",
+      message: "Deseja se cadastrar neste concurso? (Aviso: O descadastro só poderá ser feito após 15 dias)",
+      confirmText: "Sim, cadastrar",
+      cancelText: "Cancelar",
+      onCancel: () => setAlertModal(prev => ({ ...prev, isOpen: false })),
+      onConfirm: async () => {
+        setAlertModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await ApiService.post(`/categories/${contestId}/enroll`);
+          setAlertModal({
+            isOpen: true,
+            type: "success",
+            title: "Sucesso",
+            message: "Cadastrado com sucesso!",
+            confirmText: "OK",
+            onConfirm: () => {
+              setAlertModal(prev => ({ ...prev, isOpen: false }));
+              loadContests();
+            }
+          });
+        } catch (error: any) {
+          const msg = error.response?.data?.message || error.message || "Ocorreu um erro ao cadastrar.";
+          setAlertModal({
+            isOpen: true,
+            type: "error",
+            title: "Erro",
+            message: msg,
+            confirmText: "OK",
+            onConfirm: () => setAlertModal(prev => ({ ...prev, isOpen: false }))
+          });
+        }
+      }
+    });
   };
 
   const handleUnenroll = async (contestId: string) => {
-    if (!window.confirm("Tem certeza que deseja remover este concurso dos seus cadastros?")) return;
-    try {
-      await ApiService.delete(`/categories/${contestId}/enroll`);
-      alert("Descadastrado com sucesso!");
-      loadContests();
-    } catch (error) {
-      // ApiService já lida com a exibição do erro, por exemplo: "Faltam X dias..."
-    }
+    setAlertModal({
+      isOpen: true,
+      type: "warning",
+      title: "Atenção",
+      message: "Tem certeza que deseja remover este concurso dos seus cadastros?",
+      confirmText: "Sim, remover",
+      cancelText: "Cancelar",
+      onCancel: () => setAlertModal(prev => ({ ...prev, isOpen: false })),
+      onConfirm: async () => {
+        setAlertModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await ApiService.delete(`/categories/${contestId}/enroll`);
+          setAlertModal({
+            isOpen: true,
+            type: "success",
+            title: "Sucesso",
+            message: "Descadastrado com sucesso!",
+            confirmText: "OK",
+            onConfirm: () => {
+              setAlertModal(prev => ({ ...prev, isOpen: false }));
+              loadContests();
+            }
+          });
+        } catch (error: any) {
+          const msg = error.response?.data?.message || error.message || "Ocorreu um erro ao remover.";
+          setAlertModal({
+            isOpen: true,
+            type: "error",
+            title: "Erro",
+            message: msg,
+            confirmText: "OK",
+            onConfirm: () => setAlertModal(prev => ({ ...prev, isOpen: false }))
+          });
+        }
+      }
+    });
   };
 
   const filteredContests = contests.filter((c) =>
@@ -90,86 +163,84 @@ export default function Contests() {
     return (
       <div
         key={contest.id}
-        className={`bg-white rounded-2xl p-6 border border-gray-100 shadow-sm transition-all relative flex flex-col ${
-          isDisabled ? "opacity-60 cursor-not-allowed" : "hover:shadow-md hover:-translate-y-1"
-        }`}
+        className={`bg-white rounded-2xl p-6 border border-gray-100 shadow-sm transition-all relative flex flex-col ${isDisabled ? "opacity-60 cursor-not-allowed" : "hover:shadow-md hover:-translate-y-1"
+          }`}
       >
-      {contest.name === "PRF" && (
-        <div className="absolute top-0 right-6 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-b-lg shadow-sm">
-          CP
-        </div>
-      )}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="p-2 bg-slate-50 rounded-lg">
-          {getIconForContest(contest.name)}
-        </div>
-        <h3 className="text-xl font-bold text-[#1e293b]">{contest.name}</h3>
-      </div>
-
-      <div className="space-y-1 mb-6 text-sm text-gray-600">
-        <p>
-          <span className="font-medium text-gray-900">Provas anteriores:</span>{" "}
-          {contest.examsCount}
-        </p>
-        <p>
-          <span className="font-medium text-gray-900">Questões disponíveis:</span>{" "}
-          {contest.questionsCount}
-        </p>
-        {type === "ENROLLED" && contest.enrolledAt && (
-           <p className="text-xs text-gray-400 mt-2">
-             Cadastrado em {new Date(contest.enrolledAt).toLocaleDateString()}
-           </p>
+        {contest.name === "PRF" && (
+          <div className="absolute top-0 right-6 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-b-lg shadow-sm">
+            CP
+          </div>
         )}
-      </div>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-2 bg-slate-50 rounded-lg">
+            {getIconForContest(contest.name)}
+          </div>
+          <h3 className="text-xl font-bold text-[#1e293b]">{contest.name}</h3>
+        </div>
 
-      <div className="mt-auto flex flex-col gap-2">
-        {type === "ENROLLED" ? (
-          <>
-            <button
-              onClick={() => navigate(`/concursos/${contest.id}`)}
-              disabled={isDisabled}
-              className={`w-full font-semibold py-3 rounded-xl transition-colors ${
-                isDisabled 
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+        <div className="space-y-1 mb-6 text-sm text-gray-600">
+          <p>
+            <span className="font-medium text-gray-900">Provas anteriores:</span>{" "}
+            {contest.examsCount}
+          </p>
+          <p>
+            <span className="font-medium text-gray-900">Questões disponíveis:</span>{" "}
+            {contest.questionsCount}
+          </p>
+          {type === "ENROLLED" && contest.enrolledAt && (
+            <p className="text-xs text-gray-400 mt-2">
+              Cadastrado em {new Date(contest.enrolledAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-auto flex flex-col gap-2">
+          {type === "ENROLLED" ? (
+            <>
+              <button
+                onClick={() => navigate(`/concursos/${contest.id}`)}
+                disabled={isDisabled}
+                className={`w-full font-semibold py-3 rounded-xl transition-colors ${isDisabled
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-[#1e293b] hover:bg-[#334155] text-white"
-              }`}
-            >
-              {isDisabled ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Lock className="w-5 h-5" /> Exclusivo PRO
-                </span>
-              ) : (
-                "Ver Provas"
-              )}
-            </button>
+                  }`}
+              >
+                {isDisabled ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Lock className="w-5 h-5" /> Exclusivo PRO
+                  </span>
+                ) : (
+                  "Ver Provas"
+                )}
+              </button>
+              <button
+                onClick={() => handleUnenroll(contest.id)}
+                className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" /> Remover
+              </button>
+            </>
+          ) : (
             <button
-              onClick={() => handleUnenroll(contest.id)}
-              className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" /> Descadastrar
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => handleEnroll(contest.id)}
-            disabled={isDisabled}
-            className={`w-full font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 ${
-              isDisabled
+              onClick={() => handleEnroll(contest.id)}
+              disabled={isDisabled}
+              className={`w-full font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 ${isDisabled
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-emerald-600 hover:bg-emerald-700 text-white"
-            }`}
-          >
-            {isDisabled ? <Lock className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-            {isDisabled ? "Limite Atingido" : "Cadastrar-se"}
-          </button>
-        )}
+                }`}
+            >
+              {isDisabled ? <Lock className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+              {isDisabled ? "Limite Atingido" : "Cadastrar-se"}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   return (
     <div className="pb-10 max-w-7xl mx-auto space-y-10">
+      <AlertModal {...alertModal} />
       {/* Header e Busca */}
       <div>
         <div className="mb-8">
@@ -210,7 +281,7 @@ export default function Contests() {
             </span>
           )}
         </div>
-        
+
         {enrolledContests.length === 0 ? (
           <div className="bg-gray-50 border border-dashed border-gray-300 rounded-2xl p-8 text-center">
             <p className="text-gray-500 font-medium">Você ainda não está cadastrado em nenhum concurso.</p>
