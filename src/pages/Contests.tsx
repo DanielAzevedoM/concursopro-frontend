@@ -146,7 +146,7 @@ export default function Contests() {
               onClick={() => handleUnenroll(contest.id)}
               className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
             >
-              <Trash2 className="w-4 h-4" /> Descadastrar
+              <Trash2 className="w-4 h-4" /> Remover
             </button>
           </>
         ) : (
