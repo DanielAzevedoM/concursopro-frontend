@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Heart } from "lucide-react";
 import { ApiService } from "../services/ApiService";
 import { useAuth } from "../contexts/AuthContext";
+import AlertModal from "../components/AlertModal";
+import type { AlertType } from "../components/AlertModal";
 
-interface Question {
+interface QuestionItem {
   id: string;
   text: string;
   subject?: string;
@@ -15,6 +17,13 @@ interface Question {
   optionE?: string;
   optionF?: string;
   type: string;
+}
+
+interface QuestionScope {
+  id: string;
+  text: string;
+  imageUrl?: string;
+  questions: QuestionItem[];
 }
 
 interface AnswerResponse {
@@ -28,29 +37,50 @@ interface AnswerResponse {
 export default function ExamSolve() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth(); // We can re-fetch /me by calling a context method, but let's just do it directly if needed
+  const { user } = useAuth();
 
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionScopes, setQuestionScopes] = useState<QuestionScope[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
-  const [answering, setAnswering] = useState(false);
+  // Mapeia qual opção o usuário escolheu em cada questão
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [groupAnswers, setGroupAnswers] = useState<Record<string, AnswerResponse>>({});
+  const [answering, setAnswering] = useState<string | null>(null);
   const [outOfLives, setOutOfLives] = useState(false);
 
-  // Sync lives by forcing a page reload of user data from the backend? We can just let the Dashboard handle it, 
-  // but if we are here we should block.
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    type: AlertType;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: () => { },
+  });
+
   const isFree = user?.planType === "FREE";
-  const currentLives = isFree ? Math.max(0, 5 - (user?.dailyErrors || 0)) : 999;
+  const [localLives, setLocalLives] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (user && localLives === null) {
+      setLocalLives(isFree ? Math.max(0, 5 - (user.dailyErrors || 0)) : 999);
+    }
+  }, [user, localLives, isFree]);
 
   useEffect(() => {
     async function loadQuestions() {
       try {
-        const { data } = await ApiService.get<{ data: Question[] }>(`/questions/exam/${id}`);
-        // Embaralhar as questões aleatoriamente
-        const shuffled = data.sort(() => 0.5 - Math.random());
-        setQuestions(shuffled);
+        const response = await ApiService.get<any>(`/questions/exam/${id}`);
+        const data = response.data || response;
+        // Embaralha os grupos, mantendo as questões agrupadas internamente na sua ordem
+        const shuffledScopes = data.sort(() => 0.5 - Math.random());
+        setQuestionScopes(shuffledScopes);
       } catch (error) {
         console.error("Erro ao carregar questões da prova", error);
       } finally {
@@ -60,71 +90,69 @@ export default function ExamSolve() {
     loadQuestions();
   }, [id]);
 
-  const currentQuestion = questions[currentIndex];
+  const currentScope = questionScopes[currentIndex];
 
-  const handleOptionSelect = async (optionKey: string) => {
-    if (selectedOption || answering || outOfLives || currentLives === 0) return;
+  const handleOptionSelect = async (questionId: string, optionKey: string) => {
+    if (selectedOptions[questionId] || answering || outOfLives || localLives === 0) return;
 
-    if (isFree && currentLives <= 0) {
+    if (isFree && localLives !== null && localLives <= 0) {
       setOutOfLives(true);
       return;
     }
 
-    setSelectedOption(optionKey);
-    setAnswering(true);
+    setSelectedOptions(prev => ({ ...prev, [questionId]: optionKey }));
+    setAnswering(questionId);
 
     try {
-      const data = await ApiService.post<AnswerResponse>("/questions/answer", {
-        questionId: currentQuestion.id,
+      const response = await ApiService.post<any>("/questions/answer", {
+        questionId: questionId,
         selectedOption: optionKey,
       });
-      setAnswerResult(data);
+      const data = response.data || response;
+      setGroupAnswers(prev => ({ ...prev, [questionId]: data }));
 
-      if (data.remainingLives !== -1 && data.remainingLives <= 0) {
-        setOutOfLives(true);
+      if (data.remainingLives !== -1) {
+        setLocalLives(data.remainingLives);
+        if (data.remainingLives <= 0) {
+          setOutOfLives(true);
+        }
       }
-
-      // Mudar a lógica para que o AuthContext recarregue os dados via refresh ou o usuário tenha que sair da tela
-      // O ideal seria que o useAuth provesse uma forma de dar reload no /me
-
     } catch (error: any) {
       console.error(error);
       if (error.response?.status === 400 && error.response?.data?.message?.includes("limite")) {
         setOutOfLives(true);
       }
     } finally {
-      setAnswering(false);
+      setAnswering(null);
     }
   };
 
   const handleNext = () => {
-    setSelectedOption(null);
-    setAnswerResult(null);
-    if (currentIndex < questions.length - 1) {
+    setSelectedOptions({});
+    setGroupAnswers({});
+    if (currentIndex < questionScopes.length - 1) {
       setCurrentIndex(c => c + 1);
     } else {
-      // Prova acabou
-      alert("Você finalizou as questões desta prova!");
-      navigate(-1);
+      setAlertModal({
+        isOpen: true,
+        type: "success",
+        title: "Prova Finalizada!",
+        message: "Você finalizou todas as questões desta prova com sucesso.",
+        confirmText: "Voltar",
+        onConfirm: () => {
+          setAlertModal(prev => ({ ...prev, isOpen: false }));
+          navigate(-1);
+        },
+      });
     }
   };
 
   if (loading) return <div className="p-8 text-center">Carregando prova...</div>;
-  if (questions.length === 0) return <div className="p-8 text-center">Nenhuma questão encontrada para esta prova.</div>;
+  if (questionScopes.length === 0) return <div className="p-8 text-center">Nenhuma questão encontrada para esta prova.</div>;
 
-  const options = currentQuestion.type === "RIGHT_WRONG"
-    ? [
-        { key: "C", text: "Certo" },
-        { key: "E", text: "Errado" },
-      ]
-    : [
-        { key: "A", text: currentQuestion.optionA },
-        { key: "B", text: currentQuestion.optionB },
-        { key: "C", text: currentQuestion.optionC },
-        { key: "D", text: currentQuestion.optionD },
-        { key: "E", text: currentQuestion.optionE },
-        { key: "F", text: currentQuestion.optionF },
-      ].filter(o => o.text);
+  // Calcula o índice da primeira questão não respondida do escopo atual
+  const activeQuestionIndex = currentScope.questions.findIndex(q => !groupAnswers[q.id]);
+  const isGroupFinished = activeQuestionIndex === -1;
 
   return (
     <div className="pb-10 max-w-4xl mx-auto">
@@ -137,8 +165,16 @@ export default function ExamSolve() {
           <ArrowLeft className="w-4 h-4" />
           Sair da Prova
         </button>
-        <div className="text-sm font-bold text-gray-400">
-          Questão {currentIndex + 1} de {questions.length}
+        <div className="flex items-center gap-4">
+          {localLives !== null && localLives !== 999 && (
+            <div className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-full font-bold text-sm border border-red-100">
+              <Heart className="w-4 h-4 fill-current" />
+              {localLives}
+            </div>
+          )}
+          <div className="text-sm font-bold text-gray-400">
+            Grupo {currentIndex + 1} de {questionScopes.length}
+          </div>
         </div>
       </div>
 
@@ -152,97 +188,181 @@ export default function ExamSolve() {
         </div>
       )}
 
-      {/* Questão Card */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        <div className="p-6 md:p-8">
-          {currentQuestion.subject && (
-            <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full mb-4">
-              {currentQuestion.subject}
-            </span>
-          )}
-
-          <p className="text-lg text-[#1e293b] leading-relaxed mb-8">
-            {currentQuestion.text}
+      {/* Base Text Card if exists */}
+      {currentScope.text && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8 mb-6 shadow-sm">
+          <p className="text-xs text-indigo-500 font-bold mb-4 uppercase tracking-wider">Texto de Referência</p>
+          <p className="text-gray-700 whitespace-pre-wrap text-[15px] leading-relaxed">
+            {currentScope.text}
           </p>
-
-          <div className="space-y-3">
-            {options.map((opt) => {
-              const isSelected = selectedOption === opt.key;
-              let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-start gap-3 ";
-
-              if (!answerResult) {
-                // Estado normal ou hover
-                btnClass += isSelected
-                  ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                  : "border-gray-200 hover:border-blue-300 hover:bg-gray-50";
-              } else {
-                // Mostrando resultado (verde ou vermelho)
-                if (opt.key === answerResult.correctOption) {
-                  // A correta sempre fica verde
-                  btnClass += "border-emerald-500 bg-emerald-50";
-                } else if (isSelected && !answerResult.isCorrect) {
-                  // Se selecionou errado, fica vermelha
-                  btnClass += "border-red-500 bg-red-50";
-                } else {
-                  // As outras ficam desabilitadas/opacas
-                  btnClass += "border-gray-200 opacity-50";
-                }
-              }
-
-              return (
-                <button
-                  key={opt.key}
-                  disabled={!!answerResult || outOfLives || answering}
-                  onClick={() => handleOptionSelect(opt.key)}
-                  className={btnClass}
-                >
-                  <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold mt-0.5
-                    ${answerResult && opt.key === answerResult.correctOption ? 'border-emerald-500 text-emerald-500 bg-emerald-100' : ''}
-                    ${answerResult && !answerResult.isCorrect && isSelected && opt.key !== answerResult.correctOption ? 'border-red-500 text-red-500 bg-red-100' : ''}
-                    ${!answerResult ? 'border-gray-300 text-gray-500' : ''}
-                  `}>
-                    {opt.key}
-                  </div>
-                  <span className="text-gray-700 leading-relaxed">{opt.text}</span>
-                </button>
-              );
-            })}
-          </div>
+          {currentScope.imageUrl && (
+            <img src={currentScope.imageUrl} alt="Referência" className="mt-4 rounded-lg max-w-full border border-gray-200 shadow-sm" />
+          )}
         </div>
+      )}
 
-        {/* Resultado Footer */}
-        {answerResult && (
-          <div className={`p-6 md:px-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4 ${answerResult.isCorrect ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-            <div className="flex items-center gap-3">
-              {answerResult.isCorrect ? (
-                <CheckCircle className="w-8 h-8 text-emerald-500" />
-              ) : (
-                <XCircle className="w-8 h-8 text-red-500" />
-              )}
-              <div>
-                <h3 className={`font-bold ${answerResult.isCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
-                  {answerResult.isCorrect ? 'Resposta Correta!' : 'Resposta Incorreta!'}
-                </h3>
-                {!answerResult.isCorrect && isFree && (
-                  <p className="text-sm text-red-600 font-medium">Você perdeu 1 vida. (Restam {answerResult.remainingLives})</p>
+      {/* Render Questions in Group */}
+      {currentScope.questions.map((q, index) => {
+        const isActive = index === activeQuestionIndex;
+        const answerResult = groupAnswers[q.id];
+        const isAnswered = !!answerResult;
+        const isFuture = index > activeQuestionIndex && activeQuestionIndex !== -1;
+
+        // Disabled se for uma questão futura (sequencial), se já tiver sido respondida, se perdeu vidas, ou se outra tá carregando
+        const isDisabled = isFuture || isAnswered || outOfLives || answering !== null;
+
+        const options = q.type === "RIGHT_WRONG"
+          ? [
+            { key: "C", text: "Certo" },
+            { key: "E", text: "Errado" },
+          ]
+          : [
+            { key: "A", text: q.optionA },
+            { key: "B", text: q.optionB },
+            { key: "C", text: q.optionC },
+            { key: "D", text: q.optionD },
+            { key: "E", text: q.optionE },
+            { key: "F", text: q.optionF },
+          ].filter((o): o is { key: string, text: string } => !!o.text);
+
+        return (
+          <div key={q.id} className={`bg-white rounded-xl border transition-all duration-300 shadow-sm overflow-hidden mb-6 ${isActive ? 'ring-2 ring-blue-500 border-blue-500 shadow-md' : 'border-gray-100'} ${isFuture ? 'opacity-60 grayscale-[50%]' : ''}`}>
+            <div className="p-6 md:p-8">
+              <div className="flex justify-between items-start mb-4">
+                {q.subject && (
+                  <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full">
+                    {q.subject}
+                  </span>
                 )}
+                {isFuture && (
+                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                    Bloqueada
+                  </span>
+                )}
+              </div>
+
+              <p className="text-lg text-[#1e293b] leading-relaxed mb-8 whitespace-pre-wrap font-medium">
+                {q.text}
+              </p>
+
+              <div className="space-y-3">
+                {options.map((opt) => {
+                  const isSelected = selectedOptions[q.id] === opt.key;
+                  let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-start gap-3 ";
+
+                  if (!answerResult) {
+                    btnClass += isSelected
+                      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                      : isDisabled ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50 cursor-pointer";
+                  } else {
+                    if (opt.key === answerResult.correctOption) {
+                      btnClass += "border-emerald-500 bg-emerald-50";
+                    } else if (isSelected && !answerResult.isCorrect) {
+                      btnClass += "border-red-500 bg-red-50";
+                    } else {
+                      btnClass += "border-gray-100 opacity-50 cursor-not-allowed";
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={opt.key}
+                      disabled={isDisabled}
+                      onClick={() => handleOptionSelect(q.id, opt.key)}
+                      className={btnClass}
+                    >
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold mt-0.5
+                        ${answerResult && opt.key === answerResult.correctOption ? 'border-emerald-500 text-emerald-500 bg-emerald-100' : ''}
+                        ${answerResult && !answerResult.isCorrect && isSelected && opt.key !== answerResult.correctOption ? 'border-red-500 text-red-500 bg-red-100' : ''}
+                        ${!answerResult ? (isDisabled && !isSelected ? 'border-gray-200 text-gray-400' : 'border-gray-300 text-gray-500') : ''}
+                      `}>
+                        {opt.key}
+                      </div>
+                      <span className="text-gray-700 leading-relaxed">{opt.text}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <button
-              onClick={handleNext}
-              className={`font-bold px-8 py-3 rounded-lg transition-colors w-full sm:w-auto
-                ${answerResult.isCorrect
-                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                  : 'bg-red-500 hover:bg-red-600 text-white'
-                }`}
-            >
-              Avançar
-            </button>
+            {/* Resultado Footer Individual */}
+            {answerResult && (
+              <div className={`p-4 md:px-8 border-t flex flex-col sm:flex-row items-center gap-4 ${answerResult.isCorrect ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+                {answerResult.isCorrect ? (
+                  <CheckCircle className="w-6 h-6 text-emerald-500" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-500" />
+                )}
+                <div>
+                  <h3 className={`font-bold ${answerResult.isCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
+                    {answerResult.isCorrect ? 'Resposta Correta!' : 'Resposta Incorreta!'}
+                  </h3>
+                  {!answerResult.isCorrect && isFree && (
+                    <p className="text-sm text-red-600 font-medium">Você perdeu 1 vida. (Restam {answerResult.remainingLives})</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })}
 
+      {/* Footer "Avançar" só aparece quando terminar o grupo */}
+      {isGroupFinished && (
+        <div className="flex justify-end mt-4 mb-10">
+          <button
+            onClick={handleNext}
+            className="font-bold px-10 py-3.5 rounded-xl transition-colors bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200"
+          >
+            Avançar para Próxima Etapa
+          </button>
+        </div>
+      )}
+
+      {/* Modal Acabou as Vidas */}
+      {outOfLives && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <Heart className="w-10 h-10 text-red-500 fill-current animate-pulse" />
+            </div>
+
+            <h2 className="text-2xl font-black text-gray-900 mb-3">Vidas esgotadas!</h2>
+            <p className="text-gray-500 mb-8 font-medium leading-relaxed">
+              Você atingiu o limite de erros diários do plano gratuito. Continue estudando sem limites assinando o <span className="text-blue-600 font-bold">Plano PRO</span> ou ganhe uma vida extra agora.
+            </p>
+
+            <div className="space-y-3">
+              <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-xl shadow-blue-200 hover:shadow-2xl hover:shadow-blue-300 hover:-translate-y-0.5">
+                Assinar Plano PRO
+              </button>
+
+              <button
+                onClick={() => setAlertModal({
+                  isOpen: true,
+                  type: "info",
+                  title: "Anúncio",
+                  message: "Exibindo anúncio... (Lógica futura)",
+                  confirmText: "OK",
+                  onConfirm: () => setAlertModal(prev => ({ ...prev, isOpen: false }))
+                })}
+                className="w-full bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3.5 px-6 rounded-2xl transition-all"
+              >
+                Assistir anúncio (+1 vida)
+              </button>
+
+              <button
+                onClick={() => navigate(-1)}
+                className="w-full text-gray-400 hover:text-gray-600 font-bold py-3 mt-2 transition-colors"
+              >
+                Sair da Prova
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AlertModal {...alertModal} />
     </div>
   );
 }
