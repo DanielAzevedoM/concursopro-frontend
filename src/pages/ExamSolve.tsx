@@ -193,7 +193,7 @@ export default function ExamSolve() {
       {currentScope.text && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8 mb-6 shadow-sm">
           <p className="text-xs text-indigo-500 font-bold mb-4 uppercase tracking-wider">Texto de Referência</p>
-          <p className="text-gray-700 whitespace-pre-wrap text-[15px] leading-relaxed">
+          <p className="text-[#1e293b] whitespace-pre-wrap text-lg font-medium leading-relaxed">
             {currentScope.text}
           </p>
           {currentScope.imageUrl && (
@@ -230,11 +230,9 @@ export default function ExamSolve() {
           <div key={q.id} className={`bg-white rounded-xl border transition-all duration-300 shadow-sm overflow-hidden mb-6 ${isActive ? 'ring-2 ring-blue-500 border-blue-500 shadow-md' : 'border-gray-100'} ${isFuture ? 'opacity-60 grayscale-[50%]' : ''}`}>
             <div className="p-6 md:p-8">
               <div className="flex justify-between items-start mb-4">
-                {q.subject && (
-                  <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full">
-                    {q.subject}
-                  </span>
-                )}
+                <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full">
+                  Questão
+                </span>
                 {isFuture && (
                   <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
                     Bloqueada
@@ -242,7 +240,7 @@ export default function ExamSolve() {
                 )}
               </div>
 
-              <p className="text-lg text-[#1e293b] leading-relaxed mb-8 whitespace-pre-wrap font-medium">
+              <p className="text-[15px] text-gray-700 leading-relaxed mb-8 whitespace-pre-wrap">
                 {q.text}
               </p>
 

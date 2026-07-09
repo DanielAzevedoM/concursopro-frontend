@@ -4,14 +4,15 @@ import { DashboardService } from '../services/DashboardService';
 import Totalizer from '../components/Totalizer';
 import PremiumBanner from '../components/PremiumBanner';
 import PremiumActionCard from '../components/PremiumActionCard';
-import { Activity, BookOpen, CheckCircle, Target, Crown, Target as TargetIcon, Heart } from 'lucide-react';
+import { Activity, BookOpen, CheckCircle, Target, Crown, Target as TargetIcon, Heart, RotateCcw } from 'lucide-react';
 
 interface Metrics {
-  frequenciaDias: number;
-  questoesResolvidas: number;
-  questoesRevisadas: number;
-  simuladosRealizados: number;
-  mediaRevisoes: string;
+  planType: string;
+  totalQuestionsSolved: number;
+  totalQuestionsCorrect: number;
+  totalQuestionsReviewed: number;
+  totalMockExamsCompleted: number;
+  consecutiveLoginDays: number;
 }
 
 export default function Dashboard() {
@@ -62,13 +63,11 @@ export default function Dashboard() {
         )}
       </div>
 
-
-
       {/* Totalizers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
         <Totalizer
           title="Frequência"
-          value={`${metrics?.frequenciaDias || 0} Dia`}
+          value={`${metrics?.consecutiveLoginDays || 0} Dia`}
           icon={Activity}
           iconColorClass="text-orange-500"
           iconBgClass="bg-orange-50"
@@ -76,23 +75,31 @@ export default function Dashboard() {
         />
         <Totalizer
           title="Resolvidas"
-          value={metrics?.questoesResolvidas || 0}
+          value={metrics?.totalQuestionsSolved || 0}
           icon={BookOpen}
           iconColorClass="text-blue-500"
           iconBgClass="bg-blue-50"
           chartType="bar"
         />
         <Totalizer
-          title="Revisadas"
-          value={metrics?.questoesRevisadas || 0}
+          title="Acertos"
+          value={metrics?.totalQuestionsCorrect || 0}
           icon={CheckCircle}
           iconColorClass="text-emerald-500"
           iconBgClass="bg-emerald-50"
+          chartType="line"
+        />
+        <Totalizer
+          title="Revisadas"
+          value={metrics?.totalQuestionsReviewed || 0}
+          icon={RotateCcw}
+          iconColorClass="text-indigo-500"
+          iconBgClass="bg-indigo-50"
           chartType="bar"
         />
         <Totalizer
           title="Simulados"
-          value={metrics?.simuladosRealizados || 0}
+          value={metrics?.totalMockExamsCompleted || 0}
           icon={Target}
           iconColorClass="text-purple-500"
           iconBgClass="bg-purple-50"
