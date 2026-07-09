@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, FileText } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, FileText, Heart } from "lucide-react";
 import { ApiService } from "../services/ApiService";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ContestDetailsData {
   category: {
@@ -23,7 +24,12 @@ interface ContestDetailsData {
 export default function ContestDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [data, setData] = useState<ContestDetailsData | null>(null);
+  const [outOfLivesModal, setOutOfLivesModal] = useState(false);
+
+  const isFree = user?.planType === 'FREE';
+  const remainingLives = isFree ? Math.max(0, 5 - (user?.dailyErrors || 0)) : null;
 
   useEffect(() => {
     async function loadDetails() {
@@ -88,7 +94,13 @@ export default function ContestDetails() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => navigate(`/prova/${exam.id}`)}
+                  onClick={() => {
+                    if (remainingLives === 0) {
+                      setOutOfLivesModal(true);
+                    } else {
+                      navigate(`/prova/${exam.id}`);
+                    }
+                  }}
                   className="w-full md:w-auto whitespace-nowrap bg-[#1e293b] hover:bg-[#334155] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm mt-2 md:mt-0"
                 >
                   Resolver Prova
@@ -123,6 +135,45 @@ export default function ContestDetails() {
           </div>
         </div>
       </div>
+
+      {/* Modal Acabou as Vidas */}
+      {outOfLivesModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <Heart className="w-10 h-10 text-red-500 fill-current animate-pulse" />
+            </div>
+
+            <h2 className="text-2xl font-black text-gray-900 mb-3">Vidas esgotadas!</h2>
+            <p className="text-gray-500 mb-8 font-medium leading-relaxed">
+              Você atingiu o limite de erros diários do plano gratuito. Continue estudando sem limites assinando o <span className="text-gold-hover font-bold">Plano PRO</span> ou ganhe uma vida extra agora.
+            </p>
+
+            <div className="space-y-3">
+              <button onClick={() => navigate('/premium')} className="w-full bg-gradient-to-r from-gold to-gold-hover text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-xl shadow-gold/20 hover:shadow-2xl hover:shadow-gold/30 hover:-translate-y-0.5">
+                Assinar Plano PRO
+              </button>
+
+              <button
+                onClick={() => {
+                  // Lógica futura de anúncio
+                  setOutOfLivesModal(false);
+                }}
+                className="w-full bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3.5 px-6 rounded-2xl transition-all"
+              >
+                Assistir anúncio (+1 vida)
+              </button>
+
+              <button
+                onClick={() => setOutOfLivesModal(false)}
+                className="w-full text-gray-400 hover:text-gray-600 font-bold py-3 mt-2 transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

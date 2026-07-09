@@ -69,7 +69,11 @@ export default function ExamSolve() {
 
   useEffect(() => {
     if (user && localLives === null) {
-      setLocalLives(isFree ? Math.max(0, 5 - (user.dailyErrors || 0)) : 999);
+      const lives = isFree ? Math.max(0, 5 - (user.dailyErrors || 0)) : 999;
+      setLocalLives(lives);
+      if (lives <= 0) {
+        setOutOfLives(true);
+      }
     }
   }, [user, localLives, isFree]);
 
