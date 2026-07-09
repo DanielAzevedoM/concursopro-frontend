@@ -30,22 +30,22 @@ export default function AlertModal({
     success: {
       icon: <CheckCircle className="w-10 h-10 text-emerald-500" />,
       bg: "bg-emerald-100",
-      buttonColor: "bg-blue-600 hover:bg-blue-700",
+      buttonColor: "bg-primary-800 hover:bg-primary-900",
     },
     error: {
       icon: <XCircle className="w-10 h-10 text-red-500" />,
       bg: "bg-red-100",
-      buttonColor: "bg-blue-600 hover:bg-blue-700",
+      buttonColor: "bg-primary-800 hover:bg-primary-900",
     },
     warning: {
       icon: <AlertTriangle className="w-10 h-10 text-amber-500" />,
       bg: "bg-amber-100",
-      buttonColor: "bg-blue-600 hover:bg-blue-700",
+      buttonColor: "bg-primary-800 hover:bg-primary-900",
     },
     info: {
       icon: <Info className="w-10 h-10 text-blue-500" />,
       bg: "bg-blue-100",
-      buttonColor: "bg-blue-600 hover:bg-blue-700",
+      buttonColor: "bg-primary-800 hover:bg-primary-900",
     },
   };
 

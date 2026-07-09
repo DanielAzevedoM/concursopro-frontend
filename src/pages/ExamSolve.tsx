@@ -161,7 +161,7 @@ export default function ExamSolve() {
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-500 hover:text-[#3b82f6] transition-colors text-sm font-medium"
+          className="flex items-center gap-2 text-gray-500 hover:text-primary-800 transition-colors text-sm font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
           Sair da Prova
@@ -227,10 +227,10 @@ export default function ExamSolve() {
           ].filter((o): o is { key: string, text: string } => !!o.text);
 
         return (
-          <div key={q.id} className={`bg-white rounded-xl border transition-all duration-300 shadow-sm overflow-hidden mb-6 ${isActive ? 'ring-2 ring-blue-500 border-blue-500 shadow-md' : 'border-gray-100'} ${isFuture ? 'opacity-60 grayscale-[50%]' : ''}`}>
+          <div key={q.id} className={`bg-white rounded-xl border transition-all duration-300 shadow-sm overflow-hidden mb-6 ${isActive ? 'ring-2 ring-primary-800 border-primary-800 shadow-md' : 'border-gray-100'} ${isFuture ? 'opacity-60 grayscale-[50%]' : ''}`}>
             <div className="p-6 md:p-8">
               <div className="flex justify-between items-start mb-4">
-                <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full">
+                <span className="inline-block bg-slate-100 text-primary-800 text-xs font-bold px-3 py-1 rounded-full">
                   Questão
                 </span>
                 {isFuture && (
@@ -251,8 +251,8 @@ export default function ExamSolve() {
 
                   if (!answerResult) {
                     btnClass += isSelected
-                      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                      : isDisabled ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50 cursor-pointer";
+                      ? "border-primary-800 bg-slate-50 ring-2 ring-primary-800/20"
+                      : isDisabled ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed" : "border-gray-200 hover:border-primary-800/30 hover:bg-gray-50 cursor-pointer";
                   } else {
                     if (opt.key === answerResult.correctOption) {
                       btnClass += "border-emerald-500 bg-emerald-50";
@@ -311,7 +311,7 @@ export default function ExamSolve() {
         <div className="flex justify-end mt-4 mb-10">
           <button
             onClick={handleNext}
-            className="font-bold px-10 py-3.5 rounded-xl transition-colors bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200"
+            className="font-bold px-10 py-3.5 rounded-xl transition-colors bg-primary-800 hover:bg-primary-900 text-white shadow-lg shadow-slate-200"
           >
             Avançar para Próxima Etapa
           </button>
@@ -328,11 +328,11 @@ export default function ExamSolve() {
 
             <h2 className="text-2xl font-black text-gray-900 mb-3">Vidas esgotadas!</h2>
             <p className="text-gray-500 mb-8 font-medium leading-relaxed">
-              Você atingiu o limite de erros diários do plano gratuito. Continue estudando sem limites assinando o <span className="text-blue-600 font-bold">Plano PRO</span> ou ganhe uma vida extra agora.
+              Você atingiu o limite de erros diários do plano gratuito. Continue estudando sem limites assinando o <span className="text-gold-hover font-bold">Plano PRO</span> ou ganhe uma vida extra agora.
             </p>
 
             <div className="space-y-3">
-              <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-xl shadow-blue-200 hover:shadow-2xl hover:shadow-blue-300 hover:-translate-y-0.5">
+              <button className="w-full bg-gradient-to-r from-gold to-gold-hover text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-xl shadow-gold/20 hover:shadow-2xl hover:shadow-gold/30 hover:-translate-y-0.5">
                 Assinar Plano PRO
               </button>
 
