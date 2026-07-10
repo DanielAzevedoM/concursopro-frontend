@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle, Heart } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Heart, Clock } from "lucide-react";
 import { ApiService } from "../services/ApiService";
 import { useAuth } from "../contexts/AuthContext";
 import AlertModal from "../components/AlertModal";
@@ -48,6 +49,15 @@ export default function ExamSolve() {
   const [groupAnswers, setGroupAnswers] = useState<Record<string, AnswerResponse>>({});
   const [answering, setAnswering] = useState<string | null>(null);
   const [outOfLives, setOutOfLives] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(20);
+  const [timerQuestionId, setTimerQuestionId] = useState<string | null>(null);
+  const lastTimeoutQuestionIdRef = useRef<string | null>(null);
+
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setPortalTarget(document.getElementById('mobile-header-actions'));
+  }, []);
 
   const [alertModal, setAlertModal] = useState<{
     isOpen: boolean;
@@ -153,32 +163,87 @@ export default function ExamSolve() {
     }
   };
 
+  // Calcula o índice da primeira questão não respondida do escopo atual de forma segura
+  const activeQuestionIndex = currentScope?.questions?.findIndex(q => !groupAnswers[q.id]) ?? -1;
+  const isGroupFinished = activeQuestionIndex === -1 && !!currentScope;
+
+  const activeQuestionId = activeQuestionIndex !== -1 && currentScope ? currentScope.questions[activeQuestionIndex].id : null;
+
+  useEffect(() => {
+    if (activeQuestionId && activeQuestionId !== timerQuestionId) {
+      setTimerQuestionId(activeQuestionId);
+      setTimeLeft(20);
+
+      // Avisa o backend que a questão começou
+      ApiService.post('/questions/start', { questionId: activeQuestionId })
+        .then((res: any) => {
+          const data = res.data || res;
+          if (data.timeLimit) setTimeLeft(data.timeLimit);
+        })
+        .catch(console.error);
+    }
+  }, [activeQuestionId, timerQuestionId]);
+
+  useEffect(() => {
+    if (isGroupFinished || outOfLives || answering) return;
+
+    // Só permite processar o timer se a questão atual já foi sincronizada com o estado do timer
+    if (!activeQuestionId || activeQuestionId !== timerQuestionId) return;
+
+    if (timeLeft <= 0) {
+      if (lastTimeoutQuestionIdRef.current !== activeQuestionId) {
+        lastTimeoutQuestionIdRef.current = activeQuestionId;
+        // Envia resposta TIMEOUT pro backend validar o erro
+        handleOptionSelect(activeQuestionId, 'TIMEOUT');
+      }
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [timeLeft, answering, outOfLives, isGroupFinished, activeQuestionId, timerQuestionId]);
+
   if (loading) return <div className="p-8 text-center">Carregando prova...</div>;
   if (questionScopes.length === 0) return <div className="p-8 text-center">Nenhuma questão encontrada para esta prova.</div>;
 
-  // Calcula o índice da primeira questão não respondida do escopo atual
-  const activeQuestionIndex = currentScope.questions.findIndex(q => !groupAnswers[q.id]);
-  const isGroupFinished = activeQuestionIndex === -1;
+  const timerAndLivesNode = (
+    <div className="flex items-center gap-1.5 sm:gap-3">
+      <div className={`flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs sm:text-sm border transition-colors ${timeLeft <= 5 && !isGroupFinished ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : 'bg-white text-gray-700 border-gray-200'}`}>
+        <Clock className={`w-3 h-3 sm:w-4 sm:h-4 ${timeLeft <= 5 && !isGroupFinished ? 'text-red-500' : 'text-gray-400'}`} />
+        00:{timeLeft.toString().padStart(2, '0')}
+      </div>
+      {localLives !== null && localLives !== 999 && (
+        <div className="flex items-center gap-1 sm:gap-1.5 bg-red-50 text-red-600 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs sm:text-sm border border-red-100">
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
+          {localLives}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="pb-10 max-w-4xl mx-auto">
+      {/* Portal to mobile global header */}
+      {portalTarget && createPortal(timerAndLivesNode, portalTarget)}
+
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="sticky top-0 z-50 bg-[#f8fafc]/95 backdrop-blur-md pb-4 pt-4 border-b border-gray-200/50 mb-6 flex justify-between items-center -mx-4 px-4 sm:mx-0 sm:px-0 sm:bg-[#f8fafc]/90">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-500 hover:text-primary-800 transition-colors text-sm font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
-          Sair da Prova
+          <span className="hidden sm:inline">Sair da Prova</span>
+          <span className="sm:hidden">Sair</span>
         </button>
-        <div className="flex items-center gap-4">
-          {localLives !== null && localLives !== 999 && (
-            <div className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-full font-bold text-sm border border-red-100">
-              <Heart className="w-4 h-4 fill-current" />
-              {localLives}
-            </div>
-          )}
-          <div className="text-sm font-bold text-gray-400">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="hidden md:flex">
+            {timerAndLivesNode}
+          </div>
+          <div className="text-sm font-bold text-gray-400 hidden sm:block">
             Grupo {currentIndex + 1} de {questionScopes.length}
           </div>
         </div>

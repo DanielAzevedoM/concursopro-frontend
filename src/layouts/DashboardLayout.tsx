@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
          </button>
          <div className="font-bold text-lg text-gray-800">ConcursoPro</div>
-         <div className="w-6"></div> {/* spacer */}
+         <div id="mobile-header-actions" className="flex items-center justify-end min-w-[24px]"></div>
       </div>
 
       {/* Sidebar Wrapper */}
