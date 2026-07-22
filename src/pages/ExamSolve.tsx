@@ -240,7 +240,7 @@ export default function ExamSolve() {
           <span className="sm:hidden">Sair</span>
         </button>
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="hidden md:flex">
+          <div className="hidden lg:flex">
             {timerAndLivesNode}
           </div>
           <div className="text-sm font-bold text-gray-400 hidden sm:block">
