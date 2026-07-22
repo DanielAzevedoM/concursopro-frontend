@@ -230,7 +230,7 @@ export default function ExamSolve() {
       {portalTarget && createPortal(timerAndLivesNode, portalTarget)}
 
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#f8fafc]/95 backdrop-blur-md pb-4 pt-4 border-b border-gray-200/50 mb-6 flex justify-between items-center -mx-4 px-4 sm:mx-0 sm:px-0 sm:bg-[#f8fafc]/90">
+      <div className="sticky top-0 z-10 bg-[#f8fafc]/95 backdrop-blur-md pb-4 pt-4 border-b border-gray-200/50 mb-6 flex justify-between items-center -mx-4 px-4 sm:mx-0 sm:px-0 sm:bg-[#f8fafc]/90">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-500 hover:text-primary-800 transition-colors text-sm font-medium"
