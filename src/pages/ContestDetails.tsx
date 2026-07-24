@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, FileText, Heart } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, FileText, Heart, Crown, Lock } from "lucide-react";
 import { ApiService } from "../services/ApiService";
 import { useAuth } from "../contexts/AuthContext";
+
+const formatSubjectName = (name: string) => {
+  const minorWords = ['de', 'do', 'da', 'dos', 'das', 'e', 'em', 'ou', 'para', 'com', 'sem', 'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas'];
+  return name.toLowerCase().split(' ').map((word, index) => {
+    if (index !== 0 && minorWords.includes(word)) return word;
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+};
 
 interface ContestDetailsData {
   category: {
@@ -16,6 +24,7 @@ interface ContestDetailsData {
     year: string;
     institution: string;
     questionsCount: number;
+    subjects?: Record<string, number>;
   }[];
   totalQuestions: number;
   subjects: Record<string, number>;
@@ -84,7 +93,7 @@ export default function ContestDetails() {
           </h2>
           <div className="space-y-4">
             {data.exams.map((exam) => (
-              <div key={exam.id} className="bg-white rounded-2xl p-5 md:p-6 border border-gray-100 shadow-sm hover:border-indigo-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 hover:shadow-md">
+              <div key={exam.id} className="bg-white rounded-2xl p-5 md:p-6 border border-gray-100 shadow-sm hover:border-indigo-200 transition-all flex flex-col gap-4 hover:shadow-md">
                 <div className="w-full">
                   <h3 className="text-lg font-bold text-[#1e293b]">{exam.name}</h3>
                   <div className="flex flex-wrap items-center gap-3 md:gap-4 text-sm text-gray-500 mt-2">
@@ -92,19 +101,48 @@ export default function ContestDetails() {
                     <span className="flex items-center gap-1"><BookOpen className="w-4 h-4"/> Banca: {exam.institution || "N/A"}</span>
                     <span className="bg-gray-100 px-2 py-0.5 rounded-md text-xs font-semibold">{exam.questionsCount} questões</span>
                   </div>
+                  {exam.subjects && Object.keys(exam.subjects).length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-50">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Matérias:</span>
+                      {Object.keys(exam.subjects).map((subj) => (
+                        <span key={subj} className="bg-slate-100 text-slate-700 border border-[#1e293b]/20 px-2 py-0.5 rounded-md text-xs font-semibold">
+                          {formatSubjectName(subj)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <button 
-                  onClick={() => {
-                    if (remainingLives === 0) {
-                      setOutOfLivesModal(true);
-                    } else {
-                      navigate(`/prova/${exam.id}`);
-                    }
-                  }}
-                  className="w-full md:w-auto whitespace-nowrap bg-[#1e293b] hover:bg-[#334155] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm mt-2 md:mt-0"
-                >
-                  Resolver Prova
-                </button>
+                <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+                  <button 
+                    onClick={() => {
+                      if (!isFree) {
+                        // TODO: Implementar rota de matéria específica
+                        navigate(`/prova/${exam.id}`); 
+                      }
+                    }}
+                    disabled={isFree}
+                    className={`w-full sm:w-auto flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm ${
+                      isFree
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-gold to-gold-hover text-white hover:shadow-md"
+                    }`}
+                  >
+                    {isFree ? <Lock className="w-4 h-4" /> : <Crown className="w-4 h-4 fill-current" />}
+                    Matéria Específica
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (remainingLives === 0) {
+                        setOutOfLivesModal(true);
+                      } else {
+                        navigate(`/prova/${exam.id}`);
+                      }
+                    }}
+                    className="w-full sm:w-auto whitespace-nowrap bg-[#1e293b] hover:bg-[#334155] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm"
+                  >
+                    Resolver Prova
+                  </button>
+                </div>
               </div>
             ))}
             {data.exams.length === 0 && (
@@ -124,9 +162,11 @@ export default function ContestDetails() {
               <p className="text-sm text-gray-500">Nenhuma questão mapeada.</p>
             ) : (
               Object.entries(data.subjects).map(([subject, count]) => (
-                <div key={subject} className="flex justify-between items-center text-sm">
-                  <span className="font-medium text-gray-700">{subject}</span>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-semibold text-xs">
+                <div key={subject} className="flex justify-between items-start gap-3 text-sm">
+                  <span className="bg-slate-100 text-slate-700 border border-[#1e293b]/20 px-2 py-1 rounded-md text-xs font-semibold leading-snug break-words">
+                    {formatSubjectName(subject)}
+                  </span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-semibold text-xs whitespace-nowrap shrink-0">
                     {count} questões
                   </span>
                 </div>
